@@ -10,41 +10,23 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 
 
-from flask import Flask, jsonify
-from flask_jwt_extended import JWTManager, create_access_token
+from flask import Flask, render_template, jsonify, request
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from datetime import timedelta
-
-app = Flask(__name__)
-app.config["JWT_SECRET_KEY"] = "super-secret-key"  # Change la clé secrète
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valide 1h
-
-jwt = JWTManager(app)
-
-@app.route("/token", methods=["GET"])
-def get_token():
-    access_token = create_access_token(identity="user")
-    return jsonify(access_token=access_token), 200
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
-
-
-
 
 app = Flask(__name__)                                                                                                                  
                                                                                                                                        
 # Configuration du module JWT
-app.config["JWT_SECRET_KEY"] = "Ma_clé_secrete"  # Ma clée privée
+app.config["JWT_SECRET_KEY"] = "Ma_clé_secrete"  # Clé secrète
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valable 1h
+
 jwt = JWTManager(app)
 
 @app.route('/')
 def hello_world():
     return render_template('accueil.html')
 
-# Création d'une route qui vérifie l'utilisateur et retour un Jeton JWT si ok.
-# La fonction create_access_token() est utilisée pour générer un jeton JWT.
+# Route de connexion qui génère un JWT valide 1h
 @app.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username", None)
@@ -55,10 +37,7 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
-
-
-
-# Route protégée par un jeton valide
+# Route protégée par un JWT valide
 @app.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
@@ -66,4 +45,4 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
                                                                                                                
 if __name__ == "__main__":
-  app.run(debug=True)
+    app.run(debug=True)
