@@ -8,7 +8,31 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
-                                                                                                                                       
+
+
+from flask import Flask, jsonify
+from flask_jwt_extended import JWTManager, create_access_token
+from datetime import timedelta
+
+app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = "super-secret-key"  # Change la clé secrète
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valide 1h
+
+jwt = JWTManager(app)
+
+@app.route("/token", methods=["GET"])
+def get_token():
+    access_token = create_access_token(identity="user")
+    return jsonify(access_token=access_token), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
+
+
 app = Flask(__name__)                                                                                                                  
                                                                                                                                        
 # Configuration du module JWT
@@ -31,19 +55,7 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
-app = Flask(__name__)
-app.config["JWT_SECRET_KEY"] = "super-secret-key"  # Change la clé secrète
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valide 1h
 
-jwt = JWTManager(app)
-
-@app.route("/token", methods=["GET"])
-def get_token():
-    access_token = create_access_token(identity="user")
-    return jsonify(access_token=access_token), 200
-
-if __name__ == "__main__":
-    app.run(debug=True)
 
 
 # Route protégée par un jeton valide
