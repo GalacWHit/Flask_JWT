@@ -11,7 +11,7 @@ jwt = JWTManager(app)
 # Route publique d'accueil (affiche le formulaire HTML)
 @app.route('/')
 def home():
-    return render_template('formulaire.html')
+    return render_template('login.html')
 
 # Route de login pour obtenir un jeton JWT et le stocker dans un cookie
 @app.route("/login", methods=["POST"])
