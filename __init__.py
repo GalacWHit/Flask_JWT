@@ -6,6 +6,7 @@ app = Flask(__name__)
 
 # Configuration de JWT
 app.config["JWT_SECRET_KEY"] = "Ma_clé_secrete"  # C'est une clé secrète pour signer les JWT
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valable 1h
 jwt = JWTManager(app)
 
 # Route publique d'accueil (affiche le formulaire HTML)
