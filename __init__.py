@@ -1,70 +1,58 @@
-from flask import Flask
-from flask import render_template
-from flask import json
-from flask import jsonify
-from flask import request
-
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import get_jwt_identity
-from flask_jwt_extended import jwt_required
+from flask import Flask, jsonify, request, make_response, render_template
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_jwt_extended import JWTManager
 
+app = Flask(__name__)
 
-from flask import Flask, render_template, jsonify, request
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
-from datetime import timedelta
-
-from flask import Flask, render_template, jsonify, request
-from flask_jwt_extended import create_access_token, get_jwt_identity, get_jwt, jwt_required, JWTManager
-from datetime import timedelta
-
-app = Flask(__name__)                                                                                                                  
-                                                                                                                                       
-# Configuration du module JWT
-app.config["JWT_SECRET_KEY"] = "Ma_clé_secrete"  # Clé secrète
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valable 1h
-
+# Configuration de JWT
+app.config["JWT_SECRET_KEY"] = "Ma_clé_secrete"  # C'est une clé secrète pour signer les JWT
 jwt = JWTManager(app)
 
+# Route publique d'accueil (affiche le formulaire HTML)
 @app.route('/')
-def hello_world():
-    return render_template('accueil.html')
+def home():
+    return render_template('formulaire.html')
 
-# Route de connexion qui génère un JWT avec rôle
+# Route de login pour obtenir un jeton JWT et le stocker dans un cookie
 @app.route("/login", methods=["POST"])
 def login():
-    username = request.json.get("username", None)
-    password = request.json.get("password", None)
+    username = request.form.get("username", None)
+    password = request.form.get("password", None)
 
-    # Vérification des identifiants (exemple basique)
-    if username == "admin" and password == "password":
+    # Vérification des utilisateurs et de leurs rôles
+    if username == "admin" and password == "admin":
         role = "admin"
-    elif username == "user" and password == "password":
+    elif username == "test" and password == "test":
         role = "user"
     else:
         return jsonify({"msg": "Mauvais utilisateur ou mot de passe"}), 401
 
-    # Création du JWT avec le rôle inclus
-    access_token = create_access_token(identity=username, additional_claims={"role": role})
-    return jsonify(access_token=access_token)
+    # Création du jeton JWT avec le rôle
+    access_token = create_access_token(identity=username, additional_claims={"roles": role})
 
-# Route protégée par un JWT valide
+    # Création de la réponse et stockage du jeton dans un cookie
+    response = make_response(jsonify({"msg": "Login réussi, jeton stocké dans un cookie"}))
+    response.set_cookie("access_token", access_token, httponly=True)  # Cookie sécurisé et HTTPOnly
+    return response
+
+# Route protégée (requiert un jeton valide dans un cookie)
 @app.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
-    current_user = get_jwt_identity()
-    return jsonify(msg=f"Bienvenue {current_user} ! Cette page est protégée."), 200
+    current_user = get_jwt_identity()  # Récupère l'identité de l'utilisateur à partir du jeton
+    return jsonify(logged_in_as=current_user), 200
 
-# Route admin protégée (uniquement accessible aux utilisateurs ayant le rôle "admin")
+# Route admin protégée (accessible uniquement si le rôle est 'admin')
 @app.route("/admin", methods=["GET"])
 @jwt_required()
-def admin_route():
-    claims = get_jwt()  # Récupérer les données du JWT
-    if claims.get("role") != "admin":
-        return jsonify(msg="Accès refusé, admin requis"), 403
+def admin():
+    claims = get_jwt()  # Récupère toutes les informations du jeton JWT
+    role = claims.get("roles")  # Récupère le rôle du jeton
 
-    return jsonify(msg="Bienvenue, Admin !"), 200
+    if role != "admin":
+        return jsonify({"msg": "Accès refusé, vous n'êtes pas un administrateur"}), 403
+
+    return jsonify({"msg": "Bienvenue sur la page admin"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
-
