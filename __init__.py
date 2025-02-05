@@ -31,6 +31,20 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
+app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = "super-secret-key"  # Change la clé secrète
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Jeton valide 1h
+
+jwt = JWTManager(app)
+
+@app.route("/token", methods=["GET"])
+def get_token():
+    access_token = create_access_token(identity="user")
+    return jsonify(access_token=access_token), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
 
 # Route protégée par un jeton valide
 @app.route("/protected", methods=["GET"])
